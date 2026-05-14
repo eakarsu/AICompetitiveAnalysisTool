@@ -54,5 +54,10 @@ router.post('/ai/generate-report', authMiddleware, aiLimiter, aiController.gener
 router.post('/ai/analyze-ads', authMiddleware, aiLimiter, aiController.analyzeAds);
 router.post('/ai/analyze-hiring', authMiddleware, aiLimiter, aiController.analyzeHiring);
 router.post('/ai/chat', authMiddleware, aiLimiter, aiController.chat);
+// Battle card - new feature
+router.post('/ai/generate-battle-card', authMiddleware, aiLimiter, aiController.generateBattleCard);
+// AI history - persisted results browser
+router.get('/ai/history', authMiddleware, aiController.getAnalysisHistory);
+router.get('/ai/history/:id', authMiddleware, aiController.getAnalysisById);
 
 module.exports = router;

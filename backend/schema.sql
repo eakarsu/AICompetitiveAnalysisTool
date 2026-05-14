@@ -223,3 +223,19 @@ CREATE TABLE IF NOT EXISTS hiring_tracker (
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- AI analysis persistence: stores all AI results with full context
+CREATE TABLE IF NOT EXISTS ai_analyses (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  analysis_type VARCHAR(100) NOT NULL,
+  input_params JSONB NOT NULL,
+  result JSONB NOT NULL,
+  model VARCHAR(100),
+  tokens_used INTEGER,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_ai_analyses_user_id ON ai_analyses(user_id);
+CREATE INDEX IF NOT EXISTS idx_ai_analyses_type ON ai_analyses(analysis_type);
+CREATE INDEX IF NOT EXISTS idx_ai_analyses_created_at ON ai_analyses(created_at DESC);
