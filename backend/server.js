@@ -36,6 +36,9 @@ app.use('/api/competitors', require('./routes/competitors'));
 // Export routes: PDF competitor report + CSV analyses
 app.use('/api/export', require('./routes/export'));
 
+// Custom Views - competitive market analysis (mounted BEFORE 404/error handler)
+app.use('/api/custom-views', require('./routes/customViews'));
+
 // Global error handler
 app.use((err, req, res, next) => {
   console.error('Unhandled error:', err);

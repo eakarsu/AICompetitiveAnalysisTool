@@ -7,6 +7,7 @@ import CrudPage from './pages/CrudPage';
 import AIToolsPage from './pages/AIToolsPage';
 import AIHistoryPage from './pages/AIHistoryPage';
 import ComplianceAgentsPage from './pages/ComplianceAgentsPage';
+import CustomViewsPage from './pages/CustomViewsPage';
 
 // // === Batch 02 Gaps & Frontend Mounts ===
 import CfAiCompetitivePositioningDashboard from './pages/CfAiCompetitivePositioningDashboard';
@@ -42,6 +43,7 @@ export default function App() {
             <Route path="/ai-tools" element={<AIToolsPage />} />
             <Route path="/ai-history" element={<AIHistoryPage />} />
             <Route path="/compliance-agents" element={<ComplianceAgentsPage />} />
+            <Route path="/custom-views" element={<CustomViewsPage />} />
             <Route path="*" element={<Navigate to="/dashboard" />} />
           
         {/* // === Batch 02 Gaps & Frontend Mounts === */}
