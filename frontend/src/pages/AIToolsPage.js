@@ -28,6 +28,31 @@ const tabs = [
     { key: 'company', label: 'Company', type: 'input' }, { key: 'roles', label: 'Roles', type: 'input' }, { key: 'timeframe', label: 'Timeframe', type: 'input' }] },
   { id: 'chat', label: '💬 Chat', endpoint: '/ai/chat', fields: [
     { key: 'message', label: 'Message', type: 'textarea' }, { key: 'context', label: 'Context', type: 'input' }] },
+  { id: 'generate-battle-card', label: '⚔️ Battle Card', endpoint: '/ai/generate-battle-card', fields: [
+    { key: 'our_company', label: 'Our Company', type: 'input' },
+    { key: 'competitor', label: 'Competitor Name', type: 'input' },
+    { key: 'our_strengths', label: 'Our Key Strengths', type: 'textarea' },
+    { key: 'deal_context', label: 'Deal Context', type: 'textarea' }] },
+  { id: 'analyze-competitors', label: '🆚 Competitors SWOT', endpoint: '/ai/analyze-competitors', fields: [
+    { key: 'our_company', label: 'Our Company', type: 'input' },
+    { key: 'competitors', label: 'Competitors (comma-separated)', type: 'input' },
+    { key: 'industry', label: 'Industry', type: 'input' },
+    { key: 'context', label: 'Additional Context', type: 'textarea' }] },
+  { id: 'predict-market-shift', label: '🌪️ Market Shift', endpoint: '/ai/predict-market-shift', fields: [
+    { key: 'industry', label: 'Industry', type: 'input' },
+    { key: 'region', label: 'Region', type: 'input' },
+    { key: 'signals', label: 'Recent Signals / Indicators', type: 'textarea' },
+    { key: 'horizon', label: 'Forecast Horizon', type: 'input' }] },
+  { id: 'synthesize-intelligence', label: '🧠 Synthesize', endpoint: '/ai/synthesize-intelligence', fields: [
+    { key: 'topic', label: 'Topic / Focus', type: 'input' },
+    { key: 'intel_items', label: 'Intel Items (one per line)', type: 'textarea' },
+    { key: 'audience', label: 'Audience', type: 'input' }] },
+  { id: 'vertical-benchmarking', label: '📊 Vertical Benchmark', endpoint: '/ai/vertical-benchmarking', fields: [
+    { key: 'our_company', label: 'Our Company', type: 'input' },
+    { key: 'vertical', label: 'Vertical / Industry', type: 'input' },
+    { key: 'region', label: 'Region', type: 'input' },
+    { key: 'peers', label: 'Peers (comma-separated, optional)', type: 'input' },
+    { key: 'our_metrics_text', label: 'Our metrics (one per line, key: value)', type: 'textarea' }] },
 ];
 
 const renderResult = (obj, depth = 0) => {
@@ -71,9 +96,32 @@ export default function AIToolsPage() {
   const handleSubmit = async () => {
     setLoading(true); setError(''); setResult(null);
     try {
-      const res = await api.post(tab.endpoint, formData);
+      let payload = { ...formData };
+      if (tab.id === 'vertical-benchmarking') {
+        if (typeof payload.peers === 'string' && payload.peers.trim()) {
+          payload.peers = payload.peers.split(',').map(s => s.trim()).filter(Boolean);
+        }
+        if (typeof payload.our_metrics_text === 'string' && payload.our_metrics_text.trim()) {
+          const m = {};
+          payload.our_metrics_text.split('\n').forEach(line => {
+            const idx = line.indexOf(':');
+            if (idx > 0) {
+              const k = line.slice(0, idx).trim();
+              const v = line.slice(idx + 1).trim();
+              if (k) m[k] = v;
+            }
+          });
+          payload.our_metrics = m;
+          delete payload.our_metrics_text;
+        }
+      }
+      const res = await api.post(tab.endpoint, payload);
       setResult(res.data);
-    } catch (e) { setError(e.response?.data?.error || e.message); }
+    } catch (e) {
+      const status = e.response?.status;
+      const msg = e.response?.data?.error || e.message;
+      setError(status === 503 ? `${msg} (server is missing the LLM API key)` : msg);
+    }
     finally { setLoading(false); }
   };
 
@@ -94,7 +142,7 @@ export default function AIToolsPage() {
   return (
     <div style={s.page}>
       <div style={s.title}>🤖 AI Analysis Tools</div>
-      <div style={s.subtitle}>13 AI-powered competitive analysis tools</div>
+      <div style={s.subtitle}>14 AI-powered competitive analysis tools &mdash; <a href="/ai-history" style={{ color: '#e94560', textDecoration: 'none' }}>View Analysis History &rarr;</a></div>
 
       <div style={s.tabs}>
         {tabs.map(t => (

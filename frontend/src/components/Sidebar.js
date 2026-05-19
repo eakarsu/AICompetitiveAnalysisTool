@@ -17,6 +17,7 @@ const menuItems = [
   { path: '/hiring-tracker', label: 'Hiring Tracker', icon: '👥' },
   { path: '/ai-tools', label: 'AI Tools', icon: '🤖' },
   { path: '/compliance-agents', label: 'Compliance Audit', icon: '🛡️' },
+  { path: '/custom-views', label: 'Compete Views', icon: '🧭' },
 ];
 
 export default function Sidebar() {
