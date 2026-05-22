@@ -32,6 +32,7 @@ app.use('/api/monitoring', require('./routes/monitoring'));
 
 // Competitor profiles CRUD + full-profile aggregation
 app.use('/api/competitors', require('./routes/competitors'));
+app.use('/api/share-of-voice', require('./routes/shareOfVoice'));
 
 // Export routes: PDF competitor report + CSV analyses
 app.use('/api/export', require('./routes/export'));

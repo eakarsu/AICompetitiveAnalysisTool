@@ -11,6 +11,7 @@ const menuItems = [
   { path: '/social-media', label: 'Social Media', icon: '📱' },
   { path: '/news-trends', label: 'News & Trends', icon: '📰' },
   { path: '/customer-reviews', label: 'Customer Reviews', icon: '⭐' },
+  { path: '/share-of-voice', label: 'Share of Voice', icon: '📡' },
   { path: '/seo-analysis', label: 'SEO Analysis', icon: '🔍' },
   { path: '/industry-reports', label: 'Industry Reports', icon: '📋' },
   { path: '/ad-tracker', label: 'Ad Tracker', icon: '📣' },
