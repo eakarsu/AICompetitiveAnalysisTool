@@ -3,7 +3,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 
-const SECRET = process.env.JWT_SECRET || 'competitive-analysis-secret-2024';
+const SECRET = process.env.JWT_SECRET;
 
 exports.login = async (req, res) => {
   try {
@@ -20,14 +20,15 @@ exports.login = async (req, res) => {
 
 exports.register = async (req, res) => {
   try {
-    const { name, email, password, role } = req.body;
+    const { name, email, password } = req.body;
+    if (!name || !email || typeof password !== 'string' || password.length < 12) return res.status(400).json({ error: 'A 12-character password is required' });
     const exists = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
     if (exists.rows.length) return res.status(400).json({ error: 'Email already registered' });
     const hash = await bcrypt.hash(password, 10);
     const verifyToken = crypto.randomBytes(32).toString('hex');
     const result = await pool.query(
       'INSERT INTO users (name, email, password, role, email_verified, verify_token) VALUES ($1,$2,$3,$4,false,$5) RETURNING id, name, email, role',
-      [name, email, hash, role || 'analyst', verifyToken]
+      [name, email, hash, 'analyst', verifyToken]
     );
     const user = result.rows[0];
     const token = jwt.sign({ id: user.id, email: user.email, name: user.name, role: user.role }, SECRET, { expiresIn: '24h' });
@@ -71,7 +72,7 @@ exports.requestPasswordReset = async (req, res) => {
     const token = crypto.randomBytes(32).toString('hex');
     const expiry = new Date(Date.now() + 3600000);
     await pool.query('UPDATE users SET reset_token = $1, reset_token_expiry = $2 WHERE email = $3', [token, expiry, email]);
-    res.json({ message: 'Password reset link sent', token });
+    res.json({ message: 'If the account exists, password reset instructions will be sent' });
   } catch (e) { res.status(500).json({ error: e.message }); }
 };
 
@@ -98,7 +99,7 @@ exports.resendVerification = async (req, res) => {
   try {
     const token = crypto.randomBytes(32).toString('hex');
     await pool.query('UPDATE users SET verify_token = $1 WHERE id = $2', [token, req.user.id]);
-    res.json({ message: 'Verification email resent', token });
+    res.json({ message: 'Verification instructions queued' });
   } catch (e) { res.status(500).json({ error: e.message }); }
 };
 
