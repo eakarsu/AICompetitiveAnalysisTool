@@ -20,6 +20,7 @@ router.get('/auth/verify-email/:token', authController.verifyEmail);
 router.post('/auth/resend-verification', authMiddleware, authController.resendVerification);
 router.post('/auth/check-password-strength', authController.checkPasswordStrength);
 router.get('/auth/profile', authMiddleware, authController.getProfile);
+router.get('/auth/me', authMiddleware, authController.getProfile);
 router.put('/auth/profile', authMiddleware, authController.updateProfile);
 router.put('/auth/change-password', authMiddleware, changePasswordValidation, authController.changePassword);
 

@@ -5,7 +5,7 @@ const authMiddleware = require('../middleware/auth');
 const { aiLimiter } = require('../middleware/rateLimiter');
 
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
-const MODEL = 'anthropic/claude-3-5-sonnet-20241022';
+const MODEL = process.env.OPENROUTER_MODEL || 'anthropic/claude-3-5-sonnet-20241022';
 const SYSTEM = 'You are an expert competitive intelligence analyst with deep expertise in market strategy, sales, and technology trends. Provide detailed, actionable competitive intelligence.';
 
 function _noKey() {
@@ -18,7 +18,8 @@ async function callOpenRouter(prompt) {
     err.statusCode = 503;
     throw err;
   }
-  const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+  const baseUrl = (process.env.OPENROUTER_BASE_URL || 'https://openrouter.ai/api/v1').replace(/\/$/, '');
+  const response = await fetch(`${baseUrl}/chat/completions`, {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
