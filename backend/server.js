@@ -6,7 +6,18 @@ const helmet = require('helmet');
 const app = express();
 
 app.use(helmet());
-app.use(cors({ origin: process.env.FRONTEND_ORIGIN || 'http://localhost:3000', credentials: true }));
+const apiPort = process.env.BACKEND_PORT || 3001;
+const allowedOrigins = [process.env.FRONTEND_ORIGIN || 'http://localhost:3000'];
+if (process.env.NODE_ENV !== 'production') {
+  allowedOrigins.push(`http://127.0.0.1:${apiPort}`, `http://localhost:${apiPort}`);
+}
+app.use(cors({
+  origin(origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(new Error('Origin not allowed'));
+  },
+  credentials: true,
+}));
 app.use(express.json({ limit: '10mb' }));
 
 // Main API routes
