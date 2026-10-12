@@ -7,14 +7,33 @@ export default function LoginPage({ onLogin }) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault(); setLoading(true); setError('');
+  const login = async (credentials) => {
+    setLoading(true); setError('');
     try {
-      const res = await api.post('/auth/login', { email, password });
+      const res = await api.post('/auth/login', credentials);
       localStorage.setItem('token', res.data.token);
       localStorage.setItem('user', JSON.stringify(res.data.user));
       onLogin();
     } catch (e) { setError(e.response?.data?.error || 'Login failed'); }
+    finally { setLoading(false); }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    await login({ email, password });
+  };
+
+  const handleDemoLogin = async () => {
+    setLoading(true); setError('');
+    try {
+      const response = await api.get('/auth/demo-credentials');
+      const credentials = response.data;
+      if (!credentials?.email || !credentials?.password) throw new Error('Demo credentials are unavailable');
+      const result = await api.post('/auth/login', credentials);
+      localStorage.setItem('token', result.data.token);
+      localStorage.setItem('user', JSON.stringify(result.data.user));
+      onLogin();
+    } catch (e) { setError(e.response?.data?.error || e.message || 'Demo login failed'); }
     finally { setLoading(false); }
   };
 
@@ -38,20 +57,12 @@ export default function LoginPage({ onLogin }) {
         <input style={s.input} type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} />
         <button
           type="button"
-          onClick={async () => {
-            setError('');
-            try {
-              const response = await api.get('/auth/demo-credentials');
-              setEmail(response.data.email);
-              setPassword(response.data.password);
-            } catch (error) {
-              setError(error.response?.data?.error || 'Demo credentials are unavailable');
-            }
-          }}
-          aria-label="Auto Fill Demo Credentials"
-          style={{ width: '100%', marginBottom: '12px', padding: '10px 14px', borderRadius: '8px', border: '1px solid currentColor', background: 'transparent', cursor: 'pointer' }}
+          onClick={handleDemoLogin}
+          disabled={loading}
+          aria-label="Log In as Demo"
+          style={{ width: '100%', marginBottom: '12px', padding: '10px 14px', borderRadius: '8px', border: '1px solid currentColor', background: 'transparent', cursor: loading ? 'wait' : 'pointer', opacity: loading ? 0.6 : 1 }}
         >
-          Auto Fill Demo Credentials
+          {loading ? 'Signing in…' : 'Log In as Demo'}
         </button>
         <button style={{ ...s.btn, opacity: loading ? 0.6 : 1 }} disabled={loading}>{loading ? 'Signing in...' : 'Sign In'}</button>
       </form>

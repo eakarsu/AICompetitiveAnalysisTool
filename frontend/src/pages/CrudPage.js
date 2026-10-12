@@ -1,3 +1,5 @@
+import RecordDialog from './RecordDialog';
+import { AIResultValue } from './AIResultView';
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 
@@ -86,7 +88,7 @@ export default function CrudPage({ resource }) {
             <thead><tr>{displayFields.map(f => <th key={f} style={s.th}>{f.replace(/_/g,' ')}</th>)}<th style={s.th}>Actions</th></tr></thead>
             <tbody>
               {items.filter(item => !search || JSON.stringify(item).toLowerCase().includes(search.toLowerCase())).map(item => (
-                <tr key={item.id} style={s.row(selected?.id === item.id)} onClick={() => setSelected(item)}>
+                <tr key={item.id} style={s.row(selected?.id === item.id)} onClick={() => setSelected(item)} tabIndex={0} onKeyDown={(event) => { if ((event.key === 'Enter' || event.key === ' ') && event.target === event.currentTarget) { event.preventDefault(); (() => setSelected(item))(event); } }}>
                   {displayFields.map(f => <td key={f} style={s.td}>{String(item[f] || '').substring(0, 60)}</td>)}
                   <td style={s.td}>
                     <span style={{ cursor: 'pointer', marginRight: 12 }} onClick={(e) => { e.stopPropagation(); setFormData(item); setEditing(true); setShowModal(true); }}>✏️</span>
@@ -100,7 +102,7 @@ export default function CrudPage({ resource }) {
         </div>
 
         {selected && (
-          <div style={s.detail}>
+          <RecordDialog title={config.title} onClose={() => setSelected(null)}><div style={s.detail}>
             <div style={{ color: '#e94560', fontSize: 18, fontWeight: 'bold', marginBottom: 16 }}>Details</div>
             {config.fields.map(f => selected[f] != null && (
               <div key={f} style={s.detailField}>
@@ -111,9 +113,9 @@ export default function CrudPage({ resource }) {
             <div style={s.actions}>
               <button style={s.btnSmall('#3498db')} onClick={() => { setFormData(selected); setEditing(true); setShowModal(true); }}>Edit</button>
               <button style={s.btnSmall('#e74c3c')} onClick={() => handleDelete(selected.id)}>Delete</button>
-              <button style={s.btnSmall('#555')} onClick={() => setSelected(null)}>Close</button>
+              <button style={s.btnSmall('#555')} onClick={() => setSelected(null)}>Cancel</button>
             </div>
-          </div>
+          </div></RecordDialog>
         )}
       </div>
 

@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import api from '../services/api';
+import AIFieldPresets, { completeExample } from './AIFieldPresets';
+import AIResultView from './AIResultView';
 
 const tabs = [
   { id: 'scan', label: '🔍 Scan Compliance', endpoint: '/compliance-agents/scan-compliance', fields: [
@@ -16,33 +18,22 @@ const tabs = [
     { key: 'timeline', label: 'Timeline', type: 'input', placeholder: 'e.g., 90 days, 6 months' }] },
 ];
 
-const renderResult = (obj, depth = 0) => {
-  if (!obj) return null;
-  if (typeof obj === 'string') return <p style={{ color: '#e0e0e0', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{obj}</p>;
-  if (Array.isArray(obj)) return (
-    <div style={{ marginLeft: depth * 12 }}>
-      {obj.map((item, i) => (
-        <div key={i} style={{ background: '#1a1a2e', padding: 12, borderRadius: 8, marginBottom: 8, borderLeft: '3px solid #e94560' }}>
-          {typeof item === 'object' ? renderResult(item, depth + 1) : <span style={{ color: '#e0e0e0' }}>{String(item)}</span>}
-        </div>
-      ))}
-    </div>
-  );
-  return (
-    <div style={{ marginLeft: depth * 12 }}>
-      {Object.entries(obj).map(([k, v]) => (
-        <div key={k} style={{ marginBottom: 12 }}>
-          <div style={{ color: '#e94560', fontSize: 13, fontWeight: 'bold', textTransform: 'uppercase', marginBottom: 4 }}>{k.replace(/_/g, ' ')}</div>
-          {typeof v === 'object' && v !== null ? renderResult(v, depth + 1) : (
-            <div style={{ color: '#e0e0e0', background: '#1a1a2e', padding: '8px 12px', borderRadius: 6, fontSize: 14 }}>
-              {typeof v === 'number' ? <span style={{ color: '#2ecc71', fontWeight: 'bold', fontSize: 18 }}>{v}</span> :
-               typeof v === 'boolean' ? <span style={{ color: v ? '#2ecc71' : '#e94560', fontWeight: 'bold' }}>{v ? 'Yes' : 'No'}</span> : String(v)}
-            </div>
-          )}
-        </div>
-      ))}
-    </div>
-  );
+const complianceExamples = {
+  scan: [
+    { label: 'Illustrative SOC 2 scan', values: { framework: 'SOC 2 Type II (illustrative; verify scope)', scope: 'Example non-production customer support workflow', current_state: 'Illustrative inputs only—not audit evidence. No real control testing has been performed. Replace with verified scope and current documentation.' } },
+    { label: 'Illustrative GDPR review', values: { framework: 'GDPR (illustrative; confirm applicability)', scope: 'Example data-subject request process', current_state: 'Fictional review scenario. No actual processing records, lawful-basis decisions, or control evidence are supplied.' } },
+    { label: 'Illustrative ISO review', values: { framework: 'ISO/IEC 27001 (illustrative; verify version)', scope: 'Example access-management process', current_state: 'Sample planning input only. Validate asset scope, control operation, and evidence with the responsible owner.' } },
+  ],
+  evidence: [
+    { label: 'Illustrative access evidence', values: { framework: 'SOC 2 Type II (illustrative)', control: 'CC6.1 (example; verify control mapping)', requirement: 'Fictional exercise only. Replace with the authoritative control wording and evidence sources approved by your auditor. Do not treat generated text as proof.' } },
+    { label: 'Illustrative privacy evidence', values: { framework: 'GDPR (illustrative; confirm applicability)', control: 'Data-subject request handling (example)', requirement: 'Sample-only planning input. Identify approved records, retention limits, and control-owner validation before drafting evidence.' } },
+    { label: 'Illustrative ISO evidence', values: { framework: 'ISO/IEC 27001 (illustrative; verify version)', control: 'Identity and access management (example)', requirement: 'Fictional exercise only. Document the evidence source and review period; a generated narrative is not audit evidence.' } },
+  ],
+  remediation: [
+    { label: 'Illustrative access plan', values: { findings: 'Sample-only finding: an example quarterly access review lacks a documented owner. No real users or access records are included.', framework: 'SOC 2 Type II (illustrative)', timeline: 'Example plan over 30 days; confirm with the control owner' } },
+    { label: 'Illustrative privacy plan', values: { findings: 'Fictional scenario: a sample request workflow has incomplete completion timestamps. Verify against authorized records before acting.', framework: 'GDPR (illustrative; confirm applicability)', timeline: 'Example plan over 60 days; dates require owner approval' } },
+    { label: 'Illustrative ISO plan', values: { findings: 'Sample-only finding: a fictional process has not documented its evidence-review cadence. No audit result is asserted.', framework: 'ISO/IEC 27001 (illustrative; verify version)', timeline: 'Example plan over one quarter; confirm scope and dates' } },
+  ],
 };
 
 export default function ComplianceAgentsPage() {
@@ -91,6 +82,7 @@ export default function ComplianceAgentsPage() {
       </div>
 
       <div style={s.card}>
+        <AIFieldPresets fields={tab.fields} samples={complianceExamples[tab.id]} context={tab.label} disabled={loading} onFill={(sample, index) => { setFormData(completeExample(tab.fields, sample, index, tab.label, formData)); setResult(null); setError(''); }} />
         {tab.fields.map(f => (
           <div key={f.key}>
             <label style={s.label}>{f.label}</label>
@@ -107,12 +99,7 @@ export default function ComplianceAgentsPage() {
       </div>
 
       {error && <div style={s.error}>{error}</div>}
-      {result && (
-        <div style={s.card}>
-          <div style={{ color: '#e94560', fontSize: 18, fontWeight: 'bold', marginBottom: 16 }}>Results</div>
-          {renderResult(result)}
-        </div>
-      )}
+      {result && <AIResultView response={result} title={`${tab.label} report`} label="Compliance advisory" />}
     </div>
   );
 }

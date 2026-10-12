@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import api from '../services/api';
+import AIFieldPresets, { completeExample } from './AIFieldPresets';
+import AIResultView from './AIResultView';
 
 const tabs = [
   { id: 'analyze-competitor', label: '🏢 Competitor', endpoint: '/ai/analyze-competitor', fields: [
@@ -55,34 +57,40 @@ const tabs = [
     { key: 'our_metrics_text', label: 'Our metrics (one per line, key: value)', type: 'textarea' }] },
 ];
 
-const renderResult = (obj, depth = 0) => {
-  if (!obj) return null;
-  if (typeof obj === 'string') return <p style={{ color: '#e0e0e0', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{obj}</p>;
-  if (Array.isArray(obj)) return (
-    <div style={{ marginLeft: depth * 12 }}>
-      {obj.map((item, i) => (
-        <div key={i} style={{ background: '#1a1a2e', padding: 12, borderRadius: 8, marginBottom: 8, borderLeft: '3px solid #e94560' }}>
-          {typeof item === 'object' ? renderResult(item, depth + 1) : <span style={{ color: '#e0e0e0' }}>{String(item)}</span>}
-        </div>
-      ))}
-    </div>
-  );
-  return (
-    <div style={{ marginLeft: depth * 12 }}>
-      {Object.entries(obj).map(([k, v]) => (
-        <div key={k} style={{ marginBottom: 12 }}>
-          <div style={{ color: '#e94560', fontSize: 13, fontWeight: 'bold', textTransform: 'uppercase', marginBottom: 4 }}>{k.replace(/_/g, ' ')}</div>
-          {typeof v === 'object' && v !== null ? renderResult(v, depth + 1) : (
-            <div style={{ color: '#e0e0e0', background: '#1a1a2e', padding: '8px 12px', borderRadius: 6, fontSize: 14 }}>
-              {typeof v === 'number' ? <span style={{ color: '#2ecc71', fontWeight: 'bold', fontSize: 18 }}>{v}</span> :
-               typeof v === 'boolean' ? <span style={{ color: v ? '#2ecc71' : '#e94560', fontWeight: 'bold' }}>{v ? 'Yes' : 'No'}</span> : String(v)}
-            </div>
-          )}
-        </div>
-      ))}
-    </div>
-  );
-};
+function illustrativeExamples(tab) {
+  const organizations = ['Northstar Analytics', 'Maple Metrics', 'Acme Insights'];
+  const products = ['Market Atlas', 'Signal Desk', 'Benchmark Studio'];
+  const stages = ['initial planning', 'evidence review', 'executive decision'];
+  return ['Quick scenario', 'Evidence review', 'Executive brief'].map((label, index) => ({
+    label,
+    values: Object.fromEntries(tab.fields.map(({ key, label: fieldLabel }) => {
+      const field = `${key} ${fieldLabel}`.toLowerCase();
+      const fictional = 'Fictional example only; replace with verified, authorized source information.';
+      let value;
+      if (key === 'competitor_url' || key === 'url') value = `https://example.com/${['market', 'research', 'brief'][index]}`;
+      else if (['competitor_name', 'competitor', 'company', 'our_company', 'brand'].includes(key)) value = `${organizations[index]} (fictional)`;
+      else if (key === 'product' || key === 'product1') value = `${products[index]} (fictional)`;
+      else if (key === 'product2') value = `${products[(index + 1) % products.length]} (fictional)`;
+      else if (field.includes('industry') || key === 'vertical') value = 'Competitive intelligence software (illustrative)';
+      else if (key === 'region' || key === 'market') value = 'North America (illustrative market scope)';
+      else if (key === 'timeframe' || key === 'horizon') value = ['Next 30 days', 'Next 90 days', 'Next two quarters'][index];
+      else if (key === 'focus_areas') value = `${fictional} Review product positioning, pricing presentation, audience, and public messaging.`;
+      else if (key === 'criteria') value = `${fictional} Compare product fit, stated capabilities, support model, and evidence quality.`;
+      else if (key === 'platforms') value = 'Company website and publicly available channels; verify source terms before research.';
+      else if (key === 'sample_reviews') value = `${fictional}\n“Setup was straightforward, though the reporting options took time to learn.”\n“Support answered our questions after we clarified the issue.”`;
+      else if (['data_points', 'signals', 'our_metrics_text'].includes(key)) value = `${fictional}\nAdoption: example observation requiring validation\nGrowth: no verified figures supplied\nRisk: source freshness and comparability need review`;
+      else if (key === 'intel_items') value = `${fictional}\nPublic product-page change — verify date and source\nCustomer comment trend — confirm collection rights and sample size`;
+      else if (key === 'keywords') value = 'market intelligence; competitive positioning; analyst workflow (illustrative terms)';
+      else if (key === 'report_type') value = ['Initial market scan', 'Evidence and gap review', 'Executive briefing'][index];
+      else if (key === 'ad_type') value = ['Search campaign', 'Product announcement', 'Brand awareness'][index];
+      else if (key === 'roles') value = 'Product analyst; customer success lead (illustrative roles)';
+      else if (key === 'audience') value = ['Strategy team', 'Research reviewers', 'Executive decision makers'][index];
+      else if (key === 'message') value = `${fictional} Explain the comparison, evidence gaps, and decisions needed for ${stages[index]}.`;
+      else value = `${fictional} ${fieldLabel}: assess the available information for ${stages[index]}, state assumptions, and identify what should be verified.`;
+      return [key, value];
+    })),
+  }));
+}
 
 export default function AIToolsPage() {
   const [activeTab, setActiveTab] = useState('analyze-competitor');
@@ -90,6 +98,7 @@ export default function AIToolsPage() {
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [presetMessage, setPresetMessage] = useState('');
 
   const tab = tabs.find(t => t.id === activeTab);
 
@@ -146,13 +155,15 @@ export default function AIToolsPage() {
 
       <div style={s.tabs}>
         {tabs.map(t => (
-          <button key={t.id} style={s.tab(activeTab === t.id)} onClick={() => { setActiveTab(t.id); setResult(null); setError(''); }}>
+          <button key={t.id} style={s.tab(activeTab === t.id)} onClick={() => { setActiveTab(t.id); setResult(null); setError(''); setPresetMessage(''); }}>
             {t.label}
           </button>
         ))}
       </div>
 
       <div style={s.card}>
+        <AIFieldPresets fields={tab.fields} samples={illustrativeExamples(tab)} context={tab.label} disabled={loading} onFill={(sample, index) => { setFormData(completeExample(tab.fields, sample, index, tab.label, formData)); setResult(null); setError(''); setPresetMessage(`${tab.fields.length} fields filled with fictional inputs, including every optional field. Review before running.`); }} />
+        {presetMessage && <p role="status" style={{ color: '#fbbf24', marginBottom: 16 }}>{presetMessage}</p>}
         {tab.fields.map(f => (
           <div key={f.key}>
             <label style={s.label}>{f.label}</label>
@@ -169,12 +180,7 @@ export default function AIToolsPage() {
       </div>
 
       {error && <div style={s.error}>{error}</div>}
-      {result && (
-        <div style={s.card}>
-          <div style={{ color: '#e94560', fontSize: 18, fontWeight: 'bold', marginBottom: 16 }}>Results</div>
-          {renderResult(result)}
-        </div>
-      )}
+      {result && <AIResultView response={result} title={`${tab.label} analysis`} label="AI analysis" />}
     </div>
   );
 }

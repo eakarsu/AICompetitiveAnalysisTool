@@ -1,3 +1,4 @@
+import AIReportLibrary from "./components/AIReportLibrary";
 import React, { useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
@@ -29,7 +30,7 @@ export default function App() {
   if (!authenticated) return <LoginPage onLogin={() => setAuthenticated(true)} />;
 
   return (
-    <BrowserRouter>
+    <><AIReportLibrary floating /><BrowserRouter>
       <div style={{ display: 'flex' }}>
         <Sidebar />
         <div style={{ marginLeft: 250, flex: 1, minHeight: '100vh', background: '#0a0a1a' }}>
@@ -56,6 +57,6 @@ export default function App() {
       </Routes>
         </div>
       </div>
-    </BrowserRouter>
+    </BrowserRouter></>
   );
 }
